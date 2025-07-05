@@ -8,7 +8,7 @@
 
 improvements or how to proceed:
 
-datasets on multiple domain related
-download datasets in different format
-generate datasets using ai
+- datasets on multiple domain related
+- download datasets in different format
+- generate datasets using ai
 
