@@ -5,6 +5,7 @@ import random
 from faker import Faker
 from io import BytesIO 
 #def createdf():
+import time
 
 def general_data(n):
     fake=Faker()
@@ -67,31 +68,155 @@ def medical_data(n):
 
     df = pd.DataFrame(data)
     return df
-st.header("Fake Data")
-choice=st.selectbox("Select domain to generate relevant datasets",("General","Medical","Finance","Ecommerce"))
+def finance_data(n):
+    fake = Faker()
+    account_types = ['Savings', 'Checking', 'Credit', 'Investment']
+    currencies = ['USD', 'EUR', 'INR', 'GBP', 'JPY']
+    
+    data = {
+        "Customer_ID": [],
+        "Name": [],
+        "Account_Type": [],
+        "Account_Number": [],
+        "Balance": [],
+        "Currency": [],
+        "Bank_Name": [],
+        "Branch": [],
+        "Email": [],
+        "Phone_Number": [],
+        "Address": []
+    }
+
+    for i in range(int(n)):
+        name = fake.name()
+        email = fake.email()
+        account_type = random.choice(account_types)
+        currency = random.choice(currencies)
+        balance = round(random.uniform(100.0, 100000.0), 2)
+
+        data["Customer_ID"].append(f"C{1000+i:04d}")
+        data["Name"].append(name)
+        data["Account_Type"].append(account_type)
+        data["Account_Number"].append(fake.bban())
+        data["Balance"].append(balance)
+        data["Currency"].append(currency)
+        data["Bank_Name"].append(fake.company() + " Bank")
+        data["Branch"].append(fake.city())
+        data["Email"].append(email)
+        data["Phone_Number"].append(fake.phone_number())
+        data["Address"].append(fake.address().replace("\n", ", "))
+    
+    df = pd.DataFrame(data)
+    return df
+def ecommerce_data(n):
+    fake = Faker()
+    product_categories = ['Electronics', 'Fashion', 'Books', 'Home & Kitchen', 'Sports', 'Toys']
+    payment_methods = ['Credit Card', 'Debit Card', 'Net Banking', 'UPI', 'Cash on Delivery']
+
+    data = {
+        "Order_ID": [],
+        "Customer_Name": [],
+        "Product_Name": [],
+        "Category": [],
+        "Quantity": [],
+        "Price_per_Unit": [],
+        "Total_Amount": [],
+        "Payment_Method": [],
+        "Order_Date": [],
+        "Shipping_Address": []
+    }
+
+    for i in range(int(n)):
+        qty = random.randint(1, 5)
+        price = round(random.uniform(10.0, 500.0), 2)
+        total = round(qty * price, 2)
+
+        data["Order_ID"].append(f"O{1000+i:05d}")
+        data["Customer_Name"].append(fake.name())
+        data["Product_Name"].append(fake.word().capitalize() + " " + fake.word().capitalize())
+        data["Category"].append(random.choice(product_categories))
+        data["Quantity"].append(qty)
+        data["Price_per_Unit"].append(price)
+        data["Total_Amount"].append(total)
+        data["Payment_Method"].append(random.choice(payment_methods))
+        data["Order_Date"].append(fake.date_between(start_date='-2y', end_date='today'))
+        data["Shipping_Address"].append(fake.address().replace("\n", ", "))
+    
+    df = pd.DataFrame(data)
+    return df
+
+st.header("Fake Dataset Generator")
+choice=st.selectbox("Select domain to generate relevant datasets",("General","Medical","Finance","Ecommerce","Custom"))
+if choice == "Custom":
+    fake = Faker()
+    faker_fields = {
+        "First Name": lambda: fake.first_name(),
+        "Last Name": lambda: fake.last_name(),
+        "Email": lambda: fake.email(),
+        "City": lambda: fake.city(),
+        "Country": lambda: fake.country(),
+        "Phone Number": lambda: fake.phone_number(),
+        "Job Title": lambda: fake.job(),
+        "Integer (1-100)": lambda: random.randint(1, 100),
+        "Float (0.0-1.0)": lambda: round(random.uniform(0.0, 1.0), 2),
+    }
+
+    if "fields" not in st.session_state:
+        st.session_state.fields = []
+
+    if st.button("Add Field"):
+        st.session_state.fields.append({"name": "", "type": "First Name"})
+
+    fields_to_remove = []
+    for i, field in enumerate(st.session_state.fields):
+        col1, col2, col3 = st.columns([4, 4, 1])
+        field["name"] = col1.text_input("Field Name", value=field["name"], key=f"name_{i}")
+        field["type"] = col2.selectbox("Type", list(faker_fields.keys()), index=list(faker_fields.keys()).index(field["type"]), key=f"type_{i}")
+        if col3.button("X", key=f"del_{i}"):
+            fields_to_remove.append(i)
+
+    for i in sorted(fields_to_remove, reverse=True):
+        st.session_state.fields.pop(i)
+
 n=st.number_input("Enter no.of data")
 gen=st.button("Click to generate")
 if gen:
-    st.write("Generating data, please wait...")
+    stat=st.empty()
+    stat.write("Generating data, please wait...")
+    time.sleep(5)
     #st.write(choice)
     if choice=="General":
         df=general_data(n)
     if choice=="Medical":
         df=medical_data(n)
     if choice=="Finance":
-        pass
+        df=finance_data(n)
     if choice=="Ecommerce":
-        pass
- 
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False)
-    output.seek(0)  
-    st.download_button(
-        label="Download as Excel",
-        data=output,
-        file_name="fake_data.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-#down=st.download_button("Download dataset",data)
+        df=ecommerce_data(n)
+    if choice=="Custom":
+        if not st.session_state.fields:
+            st.warning("⚠️ Please add at least one field.")
+        else:
+            data = {}
+            for field in st.session_state.fields:
+                field_name = field["name"] if field["name"] else field["type"]
+                generator_func = faker_fields[field["type"]]
+                data[field_name] = [generator_func() for _ in range(int(n))]
+            df = pd.DataFrame(data)
+    stat.empty()
+    st.dataframe(df[:5])        
+    #output = BytesIO()
+    if df is not None:
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name="FakeData", index=False)
+        st.download_button("Download Excel", data=output.getvalue(), file_name="fake_data.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    else:
+        st.warning("⚠️ No data generated yet.")  
+        """
+        st.download_button(
+            label="Download as Excel",
+            data=output,
+            file_name="fake_data.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )"""
