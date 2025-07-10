@@ -8,15 +8,19 @@
 
 (v2) modified such that there's dropdown, for now added medical and general
 
+10/7/2025
+
+(v2) added finance, ecommerce and custom, and displays first 5 dataset on webapp
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 improvements or how to proceed:
 
-- datasets on multiple domain related ( kinda done?)
-- create custom dataset where users can add or delete column names
-- same as above, specify the datatype
+- (kinda done)datasets on multiple domain related 
+- (done)create custom dataset where users can add or delete column names
+- (limited datatype)same as above, specify the datatype
 - make datasets such that it can be used for ml train test
-- show dataset preview ( just first 5 rows maybe)
+- (done)show dataset preview ( just first 5 rows maybe)
 - give an option for a 'messy data'
 - download datasets in different format
 - generate datasets using ai
