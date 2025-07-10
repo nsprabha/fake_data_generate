@@ -15,6 +15,7 @@ improvements or how to proceed:
 - datasets on multiple domain related ( kinda done?)
 - create custom dataset where users can add or delete column names
 - same as above, specify the datatype
+- make datasets such that it can be used for ml train test
 - show dataset preview ( just first 5 rows maybe)
 - give an option for a 'messy data'
 - download datasets in different format
