@@ -1,14 +1,13 @@
-#v2
 import streamlit as st
 import pandas as pd
 import random
 from faker import Faker
-from io import BytesIO 
-#def createdf():
+from io import BytesIO
 import time
 
+# ------------------ Data Generators ------------------ #
 def general_data(n):
-    fake=Faker()
+    fake = Faker()
     data = {
         "name": [],
         "age": [],
@@ -22,13 +21,12 @@ def general_data(n):
         data["job"].append(fake.job())
         data["company"].append(fake.company())
         data["address"].append(fake.address().replace("\n", ", "))
-    df=pd.DataFrame(data)
-    return df
+    return pd.DataFrame(data)
+
 def medical_data(n):
     fake = Faker()
     blood_types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
     genders = ['Male', 'Female']
-
     data = {
         "Patient_ID": [],
         "Name": [],
@@ -41,20 +39,14 @@ def medical_data(n):
         "Address": [],
         "Emergency_Contact": []
     }
-
     for i in range(int(n)):
         gender = random.choice(genders)
         dob = fake.date_of_birth(minimum_age=18, maximum_age=90)
         age = pd.Timestamp('today').year - dob.year
-
-        # Gender-specific name
         name = fake.name_male() if gender == 'Male' else fake.name_female()
-
-        # Email from name
         username = name.lower().replace(" ", ".").replace("'", "")
         domain = random.choice(["gmail.com", "yahoo.com", "outlook.com"])
         email = f"{username}@{domain}"
-
         data["Patient_ID"].append(f"P{1000+i:04d}")
         data["Name"].append(name)
         data["Gender"].append(gender)
@@ -65,14 +57,12 @@ def medical_data(n):
         data["Email"].append(email)
         data["Address"].append(fake.address().replace("\n", ", "))
         data["Emergency_Contact"].append(fake.phone_number())
+    return pd.DataFrame(data)
 
-    df = pd.DataFrame(data)
-    return df
 def finance_data(n):
     fake = Faker()
     account_types = ['Savings', 'Checking', 'Credit', 'Investment']
     currencies = ['USD', 'EUR', 'INR', 'GBP', 'JPY']
-    
     data = {
         "Customer_ID": [],
         "Name": [],
@@ -86,14 +76,12 @@ def finance_data(n):
         "Phone_Number": [],
         "Address": []
     }
-
     for i in range(int(n)):
         name = fake.name()
         email = fake.email()
         account_type = random.choice(account_types)
         currency = random.choice(currencies)
         balance = round(random.uniform(100.0, 100000.0), 2)
-
         data["Customer_ID"].append(f"C{1000+i:04d}")
         data["Name"].append(name)
         data["Account_Type"].append(account_type)
@@ -105,14 +93,12 @@ def finance_data(n):
         data["Email"].append(email)
         data["Phone_Number"].append(fake.phone_number())
         data["Address"].append(fake.address().replace("\n", ", "))
-    
-    df = pd.DataFrame(data)
-    return df
+    return pd.DataFrame(data)
+
 def ecommerce_data(n):
     fake = Faker()
     product_categories = ['Electronics', 'Fashion', 'Books', 'Home & Kitchen', 'Sports', 'Toys']
     payment_methods = ['Credit Card', 'Debit Card', 'Net Banking', 'UPI', 'Cash on Delivery']
-
     data = {
         "Order_ID": [],
         "Customer_Name": [],
@@ -125,12 +111,10 @@ def ecommerce_data(n):
         "Order_Date": [],
         "Shipping_Address": []
     }
-
     for i in range(int(n)):
         qty = random.randint(1, 5)
         price = round(random.uniform(10.0, 500.0), 2)
         total = round(qty * price, 2)
-
         data["Order_ID"].append(f"O{1000+i:05d}")
         data["Customer_Name"].append(fake.name())
         data["Product_Name"].append(fake.word().capitalize() + " " + fake.word().capitalize())
@@ -141,14 +125,17 @@ def ecommerce_data(n):
         data["Payment_Method"].append(random.choice(payment_methods))
         data["Order_Date"].append(fake.date_between(start_date='-2y', end_date='today'))
         data["Shipping_Address"].append(fake.address().replace("\n", ", "))
-    
-    df = pd.DataFrame(data)
-    return df
+    return pd.DataFrame(data)
 
+# ------------------ Streamlit UI ------------------ #
 with st.sidebar:
-    mess=st.button("Messy data")
+    st.button("Messy data")  # Placeholder, can be wired later
+
 st.header("Fake Dataset Generator")
-choice=st.selectbox("Select domain to generate relevant datasets",("General","Medical","Finance","Ecommerce","Custom"))
+
+choice = st.selectbox("Select domain to generate relevant datasets", ("General", "Medical", "Finance", "Ecommerce", "Custom"))
+
+# ------------------ Custom Dataset Builder ------------------ #
 if choice == "Custom":
     fake = Faker()
     faker_fields = {
@@ -174,28 +161,30 @@ if choice == "Custom":
         col1, col2, col3 = st.columns([4, 4, 1])
         field["name"] = col1.text_input("Field Name", value=field["name"], key=f"name_{i}")
         field["type"] = col2.selectbox("Type", list(faker_fields.keys()), index=list(faker_fields.keys()).index(field["type"]), key=f"type_{i}")
-        if col3.button("X", key=f"del_{i}"):
+        if col3.button("❌", key=f"del_{i}"):
             fields_to_remove.append(i)
 
     for i in sorted(fields_to_remove, reverse=True):
         st.session_state.fields.pop(i)
 
-n=st.number_input("Enter no.of data")
-gen=st.button("Click to generate")
+# ------------------ Data Generation Trigger ------------------ #
+n = st.number_input("Enter number of data rows", min_value=1, max_value=1000, value=10)
+gen = st.button("Click to generate")
+
 if gen:
-    stat=st.empty()
+    stat = st.empty()
     stat.write("Generating data, please wait...")
-    time.sleep(5)
-    #st.write(choice)
-    if choice=="General":
-        df=general_data(n)
-    if choice=="Medical":
-        df=medical_data(n)
-    if choice=="Finance":
-        df=finance_data(n)
-    if choice=="Ecommerce":
-        df=ecommerce_data(n)
-    if choice=="Custom":
+    time.sleep(1.5)
+
+    if choice == "General":
+        st.session_state.df = general_data(n)
+    elif choice == "Medical":
+        st.session_state.df = medical_data(n)
+    elif choice == "Finance":
+        st.session_state.df = finance_data(n)
+    elif choice == "Ecommerce":
+        st.session_state.df = ecommerce_data(n)
+    elif choice == "Custom":
         if not st.session_state.fields:
             st.warning("⚠️ Please add at least one field.")
         else:
@@ -204,27 +193,27 @@ if gen:
                 field_name = field["name"] if field["name"] else field["type"]
                 generator_func = faker_fields[field["type"]]
                 data[field_name] = [generator_func() for _ in range(int(n))]
-            df = pd.DataFrame(data)
+            st.session_state.df = pd.DataFrame(data)
+
     stat.empty()
-    st.dataframe(df[:5])        
-    #output = BytesIO()
-    if df is not None:
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name="FakeData", index=False)
-        st.download_button("Download as Excel", data=output.getvalue(), file_name="fake_data.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        csv = df.to_csv(index=False).encode('utf-8')
-        st.download_button("Download CSV", data=csv, file_name="data.csv", mime="text/csv")
-        json_data = df.to_json(orient="records", indent=2)
-        st.download_button("Download JSON", data=json_data, file_name="data.json", mime="application/json")
-        tsv = df.to_csv(index=False, sep='\t').encode('utf-8')
-        st.download_button("Download TSV", data=tsv, file_name="data.tsv", mime="text/tab-separated-values")
-    else:
-        st.warning("⚠️ No data generated yet.")  
-        """
-        st.download_button(
-            label="Download as Excel",
-            data=output,
-            file_name="fake_data.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )"""
+
+if "df" in st.session_state and st.session_state.df is not None:
+    df = st.session_state.df
+    st.subheader("Preview of Dataset")
+    st.dataframe(df.head())
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name="FakeData", index=False)
+    st.download_button("Download Excel", data=output.getvalue(), file_name="fake_data.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button("Download CSV", data=csv, file_name="fake_data.csv", mime="text/csv")
+
+    json_data = df.to_json(orient="records", indent=2)
+    st.download_button("Download JSON", data=json_data, file_name="fake_data.json", mime="application/json")
+
+    tsv = df.to_csv(index=False, sep='\t').encode('utf-8')
+    st.download_button("Download TSV", data=tsv, file_name="fake_data.tsv", mime="text/tab-separated-values")
+else:
+    st.info("Generate a dataset to preview and download it.")
